@@ -13,19 +13,23 @@ const addProduct = async (req, res) => {
     const cloudinaryResponse = await cloudinary.uploader.upload(imageUrl.path);
 
     const newProduct = new Product({
-        uid,
-        productName,
-        description,
-        price,
-        place,
-        imageUrl: cloudinaryResponse.secure_url,
-        cloudinaryId: cloudinaryResponse.public_id,
-      });
-  
-      await newProduct.save();
-      res.status(201).json({ message: "Product added successfully", product: newProduct });
+      uid,
+      productName,
+      description,
+      price,
+      place,
+      imageUrl: cloudinaryResponse.secure_url,
+      cloudinaryId: cloudinaryResponse.public_id,
+    });
+
+    await newProduct.save();
+    res
+      .status(201)
+      .json({ message: "Product added successfully", product: newProduct });
   } catch (error) {
-    res.status(500).json({ message: "An error occurred while adding the product.", error });
+    res
+      .status(500)
+      .json({ message: "An error occurred while adding the product.", error });
   }
 };
 
@@ -34,19 +38,23 @@ const getLiveProducts = async (req, res) => {
     const products = await Product.find();
     res.status(200).json(products);
   } catch (error) {
-    res.status(500).json({ message: "An error occurred while fetching products.", error });
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching products.", error });
   }
 };
 
-const getUserProducts = async (req,res) => {
-  try{
-    const {uid} = req.query;
-    const products = await Product.find({uid : uid});
+const getUserProducts = async (req, res) => {
+  try {
+    const { uid } = req.query;
+    const products = await Product.find({ uid: uid });
     res.status(200).json(products);
-  }catch(error){
-    res.status(500).json({ message: "An error occurred while fetching products.", error });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "An error occurred while fetching products.", error });
   }
-}
+};
 
 const updateProduct = async (req, res) => {
   try {
@@ -61,20 +69,24 @@ const updateProduct = async (req, res) => {
     if (!existingProduct) {
       return res.status(404).json({ message: "Product not found." });
     }
-    
+
     let imageUrl = existingProduct.imageUrl;
     let cloudinaryId = existingProduct.cloudinaryId;
-    
+
     if (req.file) {
       if (cloudinaryId) {
         try {
           await cloudinary.uploader.destroy(cloudinaryId);
         } catch (deleteError) {
-          return res.status(500).json({ message: "Cloudinary error, please try again." });
+          return res
+            .status(500)
+            .json({ message: "Cloudinary error, please try again." });
         }
       }
 
-      const cloudinaryResponse = await cloudinary.uploader.upload(req.file.path);
+      const cloudinaryResponse = await cloudinary.uploader.upload(
+        req.file.path
+      );
       imageUrl = cloudinaryResponse.secure_url;
       cloudinaryId = cloudinaryResponse.public_id;
     }
@@ -88,9 +100,9 @@ const updateProduct = async (req, res) => {
       cloudinaryId,
     };
 
-    const result = await Product.findByIdAndUpdate(_id, updatedProduct, { new: true });
-
-    console.log("result:", result);
+    const result = await Product.findByIdAndUpdate(_id, updatedProduct, {
+      new: true,
+    });
 
     if (result) {
       return res.status(200).json({
@@ -102,18 +114,58 @@ const updateProduct = async (req, res) => {
         message: "Error updating product.",
       });
     }
-
   } catch (error) {
-    console.error("Error updating product:", error);
-    res.status(500).json({ message: "An error occurred while updating the product.", error });
+    res
+      .status(500)
+      .json({
+        message: "An error occurred while updating the product.",
+        error,
+      });
   }
 };
 
+const deleteProduct = async (req, res) => {
+  try {
+    const _id = req.query;
+    const product = await Product.findById(_id);
 
+    if (!product) {
+      return res.status(404).json({
+        message: "Product not found.",
+      });
+    }
+
+    const cloudinaryId = product.cloudinaryId;
+    if (cloudinaryId) {
+      await cloudinary.uploader.destroy(cloudinaryId);
+    }
+
+    const result = await Product.findByIdAndDelete(_id);
+
+    if (result) {
+      return res.status(200).json({
+        message: "Product deleted successfully.",
+        deletedProduct: result,
+      });
+    } else {
+      return res.status(500).json({
+        message: "Error deleting product.",
+      });
+    }
+  } catch (error) {
+    res
+      .status(500)
+      .json({
+        message: "An error occurred while deleting the product.",
+        error,
+      });
+  }
+};
 
 module.exports = {
   addProduct,
   getLiveProducts,
   getUserProducts,
-  updateProduct
+  updateProduct,
+  deleteProduct,
 };
