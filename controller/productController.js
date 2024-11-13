@@ -48,8 +48,72 @@ const getUserProducts = async (req,res) => {
   }
 }
 
+const updateProduct = async (req, res) => {
+  try {
+    const { uid, productName, description, price, place } = req.body;
+    const { _id } = req.query;
+
+    if (!uid || !productName || !description || !price || !place || !_id) {
+      return res.status(400).json({ message: "All fields are required." });
+    }
+
+    const existingProduct = await Product.findById(_id);
+    if (!existingProduct) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+    
+    let imageUrl = existingProduct.imageUrl;
+    let cloudinaryId = existingProduct.cloudinaryId;
+    
+    if (req.file) {
+      if (cloudinaryId) {
+        try {
+          await cloudinary.uploader.destroy(cloudinaryId);
+        } catch (deleteError) {
+          return res.status(500).json({ message: "Cloudinary error, please try again." });
+        }
+      }
+
+      const cloudinaryResponse = await cloudinary.uploader.upload(req.file.path);
+      imageUrl = cloudinaryResponse.secure_url;
+      cloudinaryId = cloudinaryResponse.public_id;
+    }
+
+    const updatedProduct = {
+      productName,
+      description,
+      price,
+      place,
+      imageUrl,
+      cloudinaryId,
+    };
+
+    const result = await Product.findByIdAndUpdate(_id, updatedProduct, { new: true });
+
+    console.log("result:", result);
+
+    if (result) {
+      return res.status(200).json({
+        message: "Product updated successfully.",
+        updatedProduct: result,
+      });
+    } else {
+      return res.status(500).json({
+        message: "Error updating product.",
+      });
+    }
+
+  } catch (error) {
+    console.error("Error updating product:", error);
+    res.status(500).json({ message: "An error occurred while updating the product.", error });
+  }
+};
+
+
+
 module.exports = {
   addProduct,
   getLiveProducts,
-  getUserProducts
+  getUserProducts,
+  updateProduct
 };
