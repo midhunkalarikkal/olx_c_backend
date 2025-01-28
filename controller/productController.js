@@ -34,7 +34,12 @@ const addProduct = async (req, res) => {
 const getLiveProducts = async (req, res) => {
   try {
     const { uid } = req.query;
-    const products = await Product.find({uid : {$ne : uid}});
+    let products;
+    if(uid){
+      products = await Product.find({uid : {$ne : uid}});
+    }else{
+      products = await Product.find();
+    }
     res.status(200).json(products);
   } catch (error) {
     res
