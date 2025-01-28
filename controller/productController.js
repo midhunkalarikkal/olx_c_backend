@@ -10,16 +10,14 @@ const addProduct = async (req, res) => {
       return res.status(400).json({ message: "All fields are required." });
     }
 
-    const cloudinaryResponse = await cloudinary.uploader.upload(imageUrl.path);
-
     const newProduct = new Product({
       uid,
       productName,
       description,
       price,
       place,
-      imageUrl: cloudinaryResponse.secure_url,
-      cloudinaryId: cloudinaryResponse.public_id,
+      imageUrl: imageUrl.path,
+      cloudinaryId: imageUrl.filename,
     });
 
     await newProduct.save();
@@ -35,7 +33,8 @@ const addProduct = async (req, res) => {
 
 const getLiveProducts = async (req, res) => {
   try {
-    const products = await Product.find();
+    const { uid } = req.query;
+    const products = await Product.find({uid : {$ne : uid}});
     res.status(200).json(products);
   } catch (error) {
     res
@@ -84,11 +83,8 @@ const updateProduct = async (req, res) => {
         }
       }
 
-      const cloudinaryResponse = await cloudinary.uploader.upload(
-        req.file.path
-      );
-      imageUrl = cloudinaryResponse.secure_url;
-      cloudinaryId = cloudinaryResponse.public_id;
+      imageUrl = req.file.path;
+      cloudinaryId = req.file.filename;
     }
 
     const updatedProduct = {
@@ -110,7 +106,7 @@ const updateProduct = async (req, res) => {
         updatedProduct: result,
       });
     } else {
-      return res.status(500).json({
+      return res.status(400).json({
         message: "Error updating product.",
       });
     }
@@ -148,7 +144,7 @@ const deleteProduct = async (req, res) => {
         deletedProduct: result,
       });
     } else {
-      return res.status(500).json({
+      return res.status(400).json({
         message: "Error deleting product.",
       });
     }

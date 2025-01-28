@@ -4,7 +4,7 @@
   "main": "coudinaryConfig.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "nodemon server.js"
   },
   "author": "",
   "license": "ISC",
@@ -17,5 +17,8 @@
     "mongoose": "^8.8.1",
     "multer": "^1.4.5-lts.1",
     "multer-storage-cloudinary": "^4.0.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
   }
 }
