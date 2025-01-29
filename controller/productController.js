@@ -34,8 +34,8 @@ const addProduct = async (req, res) => {
 const getLiveProducts = async (req, res) => {
   try {
     const { uid } = req.query;
-    let products;
-    if(uid){
+    let products = [];
+;    if(uid){
       products = await Product.find({uid : {$ne : uid}});
     }else{
       products = await Product.find();
@@ -52,6 +52,9 @@ const getUserProducts = async (req, res) => {
   try {
     const { uid } = req.query;
     const products = await Product.find({ uid: uid });
+    if(!products){
+      throw new Error("Data fetching error");
+    }
     res.status(200).json(products);
   } catch (error) {
     res
